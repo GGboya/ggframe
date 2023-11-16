@@ -22,6 +22,10 @@ type Context struct {
 	hasTimeout bool
 	// 写保护机制
 	writerMux *sync.Mutex
+
+	// 当前请求的handler链条
+	handlers []ControllerHandler
+	index    int // 当前请求调用到调用链的哪个节点
 }
 
 func NewContext(r *http.Request, w http.ResponseWriter) *Context {
@@ -30,7 +34,19 @@ func NewContext(r *http.Request, w http.ResponseWriter) *Context {
 		responseWriter: w,
 		ctx:            r.Context(),
 		writerMux:      &sync.Mutex{},
+		index:          -1,
 	}
+}
+
+// Next 核心函数，调用context的下一个函数
+func (ctx *Context) Next() error {
+	ctx.index += 1
+	if ctx.index < len(ctx.handlers) {
+		if err := ctx.handlers[ctx.index](ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // base 封装基本的函数功能，比如获取http.Request
@@ -53,6 +69,11 @@ func (ctx *Context) SetHasTimeout() {
 
 func (ctx *Context) HasTimeout() bool {
 	return ctx.hasTimeout
+}
+
+// SetHandlers 为context设置handlers
+func (ctx *Context) SetHandlers(handlers []ControllerHandler) {
+	ctx.handlers = handlers
 }
 
 // context 实现标准Context接口
