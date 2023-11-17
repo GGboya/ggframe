@@ -9,6 +9,9 @@ type IGroup interface {
 
 	// 实现嵌套Group
 	Group(string) IGroup
+
+	// 嵌套中间件
+	Use(middlewares ...ControllerHandler)
 }
 
 // Group 实现IGroup
@@ -22,17 +25,11 @@ type Group struct {
 // NewGroup 初始化Group
 func NewGroup(core *Core, prefix string) *Group {
 	return &Group{
-		core:   core,
-		parent: nil,
-		prefix: prefix,
+		core:        core,
+		parent:      nil,
+		prefix:      prefix,
+		middlewares: []ControllerHandler{},
 	}
-}
-
-func (g *Group) getMiddlewares() []ControllerHandler {
-	if g.parent == nil {
-		return g.middlewares
-	}
-	return append(g.parent.getMiddlewares(), g.middlewares...)
 }
 
 func (g *Group) Get(uri string, handlers ...ControllerHandler) {
@@ -65,6 +62,13 @@ func (g *Group) getAbsolutePrefix() string {
 		return g.prefix
 	}
 	return g.parent.getAbsolutePrefix() + g.prefix
+}
+
+func (g *Group) getMiddlewares() []ControllerHandler {
+	if g.parent == nil {
+		return g.middlewares
+	}
+	return append(g.parent.getMiddlewares(), g.middlewares...)
 }
 
 // Group 实现 Group 方法
