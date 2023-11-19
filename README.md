@@ -14,3 +14,9 @@ fsm.go 中定义了变量和函数，main.go 中调用。cmd 运行 go run main.
 
 
 
+2、fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+
+起因是挂了梯子出现问题，把梯子关闭，然后重启goland即可运行。
